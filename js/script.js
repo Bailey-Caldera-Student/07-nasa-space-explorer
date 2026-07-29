@@ -4,7 +4,7 @@ const endInput = document.getElementById('endDate');
 const gallery = document.getElementById('gallery');
 const getImagesButton = document.querySelector('button');
 const modal = document.getElementById('modal');
-const modalImage = document.getElementById('modalImage');
+const modalMedia = document.getElementById('modalMedia');
 const modalTitle = document.getElementById('modalTitle');
 const modalDate = document.getElementById('modalDate');
 const modalExplanation = document.getElementById('modalExplanation');
@@ -115,10 +115,12 @@ function renderGallery(images) {
 
 function createMediaPreview(image) {
   if (image.media_type === 'video') {
-    if (image.url.includes('youtube') || image.url.includes('youtu.be')) {
+    const workingVideoUrl = getWorkingVideoUrl(image.url);
+
+    if (isYouTubeUrl(image.url)) {
       return `
         <div class="media-preview">
-          <a href="${image.url}" target="_blank" rel="noopener noreferrer">Watch video</a>
+          <a href="${workingVideoUrl}" target="_blank" rel="noopener noreferrer">Watch video</a>
         </div>
       `;
     }
@@ -133,51 +135,71 @@ function createMediaPreview(image) {
   return `<img src="${image.url}" alt="${image.title}" />`;
 }
 
+function getWorkingVideoUrl(videoUrl) {
+  if (!videoUrl) {
+    return '';
+  }
+
+  if (videoUrl.includes('youtube.com/watch?v=')) {
+    return videoUrl;
+  }
+
+  if (videoUrl.includes('youtu.be/')) {
+    const videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
+    return videoId ? `https://www.youtube.com/watch?v=${videoId}` : videoUrl;
+  }
+
+  if (videoUrl.includes('/embed/')) {
+    const videoId = videoUrl.match(/\/embed\/([a-zA-Z0-9_-]+)/)?.[1];
+    return videoId ? `https://www.youtube.com/watch?v=${videoId}` : videoUrl;
+  }
+
+  return videoUrl;
+}
+
+function isYouTubeUrl(videoUrl) {
+  return videoUrl.includes('youtube') || videoUrl.includes('youtu.be');
+}
+
+function getVideoEmbedHtml(videoUrl) {
+  const videoIdMatch = videoUrl.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  const shortVideoIdMatch = videoUrl.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  const embedVideoIdMatch = videoUrl.match(/\/embed\/([a-zA-Z0-9_-]+)/);
+
+  let videoId = '';
+
+  if (videoIdMatch) {
+    videoId = videoIdMatch[1];
+  } else if (shortVideoIdMatch) {
+    videoId = shortVideoIdMatch[1];
+  } else if (embedVideoIdMatch) {
+    videoId = embedVideoIdMatch[1];
+  }
+
+  if (videoId) {
+    return `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0" title="NASA video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  }
+
+  return `<video controls src="${videoUrl}" class="media-element"></video>`;
+}
+
 // Show a modal with the selected media's full details
 function showDetails(image) {
   const formattedDate = formatDisplayDate(image.date);
 
   if (image.media_type === 'video') {
-    if (image.url.includes('youtube') || image.url.includes('youtu.be')) {
-      modalImage.style.display = 'none';
-      modalImage.src = '';
-      modalImage.alt = '';
-      modalTitle.textContent = image.title;
-      modalDate.innerHTML = `<strong>Date:</strong> ${formattedDate}`;
-      modalExplanation.textContent = image.explanation;
-      modal.querySelector('.modal-body').innerHTML = `
-        <h3>${image.title}</h3>
-        <p><strong>Date:</strong> ${formattedDate}</p>
-        <p>${image.explanation}</p>
-        <p><a href="${image.url}" target="_blank" rel="noopener noreferrer">Open video</a></p>
-      `;
+    if (isYouTubeUrl(image.url)) {
+      modalMedia.innerHTML = getVideoEmbedHtml(image.url);
     } else {
-      modalImage.style.display = 'block';
-      modalImage.src = image.url;
-      modalImage.alt = image.title;
-      modalTitle.textContent = image.title;
-      modalDate.innerHTML = `<strong>Date:</strong> ${formattedDate}`;
-      modalExplanation.textContent = image.explanation;
-      modal.querySelector('.modal-body').innerHTML = `
-        <h3>${image.title}</h3>
-        <p><strong>Date:</strong> ${formattedDate}</p>
-        <p>${image.explanation}</p>
-      `;
+      modalMedia.innerHTML = `<video controls src="${image.url}" class="media-element"></video>`;
     }
   } else {
-    modalImage.style.display = 'block';
-    modalImage.src = image.url;
-    modalImage.alt = image.title;
-    modalTitle.textContent = image.title;
-    modalDate.innerHTML = `<strong>Date:</strong> ${formattedDate}`;
-    modalExplanation.textContent = image.explanation;
-    modal.querySelector('.modal-body').innerHTML = `
-      <h3>${image.title}</h3>
-      <p><strong>Date:</strong> ${formattedDate}</p>
-      <p>${image.explanation}</p>
-    `;
+    modalMedia.innerHTML = `<img src="${image.url}" alt="${image.title}" class="modal-image" />`;
   }
 
+  modalTitle.textContent = image.title;
+  modalDate.innerHTML = `<strong>Date:</strong> ${formattedDate}`;
+  modalExplanation.textContent = image.explanation;
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
 }
