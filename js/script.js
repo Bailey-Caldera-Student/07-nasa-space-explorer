@@ -42,7 +42,7 @@ getImagesButton.addEventListener('click', () => {
         return response.json();
       })
       .then((data) => {
-        if (data.media_type === 'image') {
+        if (data.media_type === 'image' || data.media_type === 'video') {
           return data;
         }
         return null;
@@ -84,7 +84,7 @@ function formatDisplayDate(dateString) {
   });
 }
 
-// Display the fetched images in cards with title and date
+// Display the fetched media in cards with title and date
 function renderGallery(images) {
   if (images.length === 0) {
     gallery.innerHTML = '<div class="placeholder"><div class="placeholder-icon">🔭</div><p>No images found for this date range.</p></div>';
@@ -97,9 +97,10 @@ function renderGallery(images) {
     const card = document.createElement('article');
     card.className = 'gallery-item';
     const formattedDate = formatDisplayDate(image.date);
+    const mediaContent = createMediaPreview(image);
 
     card.innerHTML = `
-      <img src="${image.url}" alt="${image.title}" />
+      ${mediaContent}
       <h3>${image.title}</h3>
       <p>${formattedDate}</p>
     `;
@@ -112,15 +113,71 @@ function renderGallery(images) {
   });
 }
 
-// Show a modal with the selected image's full details
+function createMediaPreview(image) {
+  if (image.media_type === 'video') {
+    if (image.url.includes('youtube') || image.url.includes('youtu.be')) {
+      return `
+        <div class="media-preview">
+          <a href="${image.url}" target="_blank" rel="noopener noreferrer">Watch video</a>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="media-preview">
+        <video controls src="${image.url}" class="media-element"></video>
+      </div>
+    `;
+  }
+
+  return `<img src="${image.url}" alt="${image.title}" />`;
+}
+
+// Show a modal with the selected media's full details
 function showDetails(image) {
   const formattedDate = formatDisplayDate(image.date);
 
-  modalImage.src = image.url;
-  modalImage.alt = image.title;
-  modalTitle.textContent = image.title;
-  modalDate.innerHTML = `<strong>Date:</strong> ${formattedDate}`;
-  modalExplanation.textContent = image.explanation;
+  if (image.media_type === 'video') {
+    if (image.url.includes('youtube') || image.url.includes('youtu.be')) {
+      modalImage.style.display = 'none';
+      modalImage.src = '';
+      modalImage.alt = '';
+      modalTitle.textContent = image.title;
+      modalDate.innerHTML = `<strong>Date:</strong> ${formattedDate}`;
+      modalExplanation.textContent = image.explanation;
+      modal.querySelector('.modal-body').innerHTML = `
+        <h3>${image.title}</h3>
+        <p><strong>Date:</strong> ${formattedDate}</p>
+        <p>${image.explanation}</p>
+        <p><a href="${image.url}" target="_blank" rel="noopener noreferrer">Open video</a></p>
+      `;
+    } else {
+      modalImage.style.display = 'block';
+      modalImage.src = image.url;
+      modalImage.alt = image.title;
+      modalTitle.textContent = image.title;
+      modalDate.innerHTML = `<strong>Date:</strong> ${formattedDate}`;
+      modalExplanation.textContent = image.explanation;
+      modal.querySelector('.modal-body').innerHTML = `
+        <h3>${image.title}</h3>
+        <p><strong>Date:</strong> ${formattedDate}</p>
+        <p>${image.explanation}</p>
+      `;
+    }
+  } else {
+    modalImage.style.display = 'block';
+    modalImage.src = image.url;
+    modalImage.alt = image.title;
+    modalTitle.textContent = image.title;
+    modalDate.innerHTML = `<strong>Date:</strong> ${formattedDate}`;
+    modalExplanation.textContent = image.explanation;
+    modal.querySelector('.modal-body').innerHTML = `
+      <h3>${image.title}</h3>
+      <p><strong>Date:</strong> ${formattedDate}</p>
+      <p>${image.explanation}</p>
+    `;
+  }
+
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
 }

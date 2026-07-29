@@ -118,11 +118,27 @@ button:hover {
   }
 }
 
-.gallery-item img {
+.gallery-item img,
+.media-element {
   width: 100%;
   height: 200px;
   object-fit: cover;
   border-radius: 4px;
+}
+
+.media-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: #eaeaea;
+  border-radius: 4px;
+}
+
+.media-preview a {
+  color: #0b5fff;
+  text-decoration: none;
+  font-weight: bold;
 }
 
 .gallery-item h3,
