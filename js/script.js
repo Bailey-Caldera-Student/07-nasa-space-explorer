@@ -10,9 +10,8 @@ const modalDate = document.getElementById('modalDate');
 const modalExplanation = document.getElementById('modalExplanation');
 const closeModalButton = document.querySelector('.modal-close');
 
-// Replace this placeholder with your real NASA API key later
-const apiKey = 'RtoV9ryQ0QHa6vjQsXQOEjaaxVlJzeqFEYsqNp4H';
-const apiUrl = 'https://api.nasa.gov/planetary/apod';
+// The NASA API key is kept on the server side for security.
+const apiUrl = '/api/apod';
 
 // Call the setupDateInputs function from dateRange.js
 // This sets up the date pickers to:
@@ -34,7 +33,7 @@ getImagesButton.addEventListener('click', () => {
 
   const dates = getDateRange(startDate, endDate);
   const fetchRequests = dates.map((date) => {
-    return fetch(`${apiUrl}?api_key=${apiKey}&date=${date}`)
+    return fetch(`${apiUrl}?date=${date}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Unable to fetch image data');
